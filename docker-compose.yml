@@ -1,0 +1,94 @@
+version: '3.9'
+
+services:
+  bot:
+    build:
+      context: .
+    working_dir: "/usr/src/app/bot"
+    volumes:
+      - .:/usr/src/app/bot
+    command: python3 -m bot
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - influxdb
+      - pg_database
+    networks:
+      - bot_dev_network
+
+  pg_database:
+   image: postgres:16-alpine
+   ports:
+     - "5439:5432"
+   restart: always
+   volumes:
+     - pgdata:/var/lib/postgresql/data
+   command: "postgres -c max_connections=150
+            -c shared_buffers=512MB -c effective_cache_size=1536MB
+            -c maintenance_work_mem=128MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB
+            -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200
+            -c work_mem=3495kB -c min_wal_size=1GB -c max_wal_size=4GB -c max_worker_processes=2
+            -c max_parallel_workers_per_gather=1 -c max_parallel_workers=2 -c max_parallel_maintenance_workers=1"
+   env_file:
+     - '.env'
+   logging:
+     driver: "json-file"
+     options:
+       max-size: "200k"
+       max-file: "10"
+   networks:
+    - bot_dev_network
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    volumes:
+      - cache:/data
+    networks:
+      - bot_dev_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 3
+      start_period: 5s
+
+  influxdb:
+    image: influxdb:2.7
+    restart: unless-stopped
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    ports:
+      - "8087:8086"
+    networks:
+      - bot_dev_network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8086/health"]
+      interval: 10s
+      retries: 3
+      start_period: 5s
+
+  grafana:
+    image: grafana/grafana
+    user: root
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - grafana/provisioning/:/etc/grafana/provisioning/
+    environment:
+      TZ: "Europe/Moscow"
+    networks:
+      - bot_dev_network
+
+volumes:
+  redis_data:
+  influxdb_data:
+  grafana_data:
+  pgdata:
+
+networks:
+  bot_dev_network:
+    driver: bridge

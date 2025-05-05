@@ -1,0 +1,31 @@
+aiogram~=3.15.0
+aiogram_dialog==2.3.1
+environs~=11.2.1
+redis
+betterlogging~=1.0.0
+aiogram-i18n[runtime]
+fluent.runtime
+# # For enabling api:
+# backoff
+# ujson
+# yarl
+
+# # For PostgreSQL sqlalchemy + alembic:
+sqlalchemy~=2.0.36
+alembic~=1.14.0
+asyncpg
+
+influxdb-client
+python-dotenv
+typing_extensions~=4.12.2
+aiohttp==3.11.11
+yarl~=1.18.0
+geopy~=2.4.1
+tzdata
+timezonefinder~=6.5.7
+aiogram_i18n~=1.4
+babel==2.16.0
+dateparser
+starlette==0.27.0
+APScheduler==3.11.0
+python-dateutil==2.9.0.post0
